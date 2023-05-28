@@ -106,8 +106,8 @@ async function updateContactHandler(req,res){
 
 async function handleAddUserForm(req,res){
     const userInput = req.body;
-  const sql = `insert into user_contact_form(username, email, usermessage,category_url) values($1, $2, $3, $4) returning *`;
-  const handleValueFromUser = [userInput.username, userInput.email, userInput.usermessage, userInput.category_url];
+  const sql = `insert into user_contact_form(username, email, usermessage) values($1, $2, $3) returning *`;
+  const handleValueFromUser = [userInput.username, userInput.email, userInput.usermessage];
   client.query(sql, handleValueFromUser).then(data => {
     res.status(201).json(data.rows)
   }).catch(err => errorHandler(err, req, res))
