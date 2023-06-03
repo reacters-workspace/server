@@ -17,13 +17,17 @@ app.get(`/`, homeHandler)
 app.get('/db-data', handleDbData)
 app.get(`/category`, categoryHandler)
 app.get(`/exercises`, exercisesHandler)
+app.get(`/schedule`, handleScheduleData)
+app.get(`/get-categories-db`, handleGetDbCategory)
 app.put(`/contact/:id`, updateContactHandler)
 app.put(`/update-category/:id`, updateCategoryHandler)
-app.delete(`/delete/:id`, handleDeleteForm)
+app.put(`/update-schedule/:id`, updateScheduleHandler)
 app.post(`/contact`, handleAddUserForm)
 app.post(`/add-category`, handleAddCategory)
-app.get(`/get-categories-db`, handleGetDbCategory)
+app.post(`/schedule`, handleAddSchedule)
+app.delete(`/delete/:id`, handleDeleteForm)
 app.delete(`/deleteCategory/:id`, handleDeleteCategory)
+app.delete(`/deleteSchedule/:id`, handleDeleteSchedule)
 app.use(errorHandler)
 
 
@@ -73,6 +77,18 @@ async function categoryHandler(req, res) {
   }
 }
 
+function handleScheduleData(req, res) {
+  const sql = `select * from  user_schedule`;
+  client.query(sql).then(data => {
+    res.json({
+      count: data.rowCount,
+      data: data.rows
+    })
+  }).catch(err => {
+    errorHandler(err, req, res);
+  })
+}
+
 async function exercisesHandler(req, res) {
   const options = {
     method: 'GET',
@@ -114,6 +130,15 @@ async function updateCategoryHandler(req, res) {
     res.status(202).json(data.rows)
   )
 }
+async function updateScheduleHandler(req, res) {
+  const id = req.params.id;
+  const newData = req.body;
+  const sql = `update user_schedule set week_day = $1 where id = $2 returning *`;
+  const updatedValue = [newData.week_day, id];
+  client.query(sql, updatedValue).then(data =>
+    res.status(202).json(data.rows)
+  )
+}
 
 async function handleAddUserForm(req, res) {
   const userInput = req.body;
@@ -127,6 +152,14 @@ async function handleAddCategory(req, res) {
   const userInput = req.body;
   const sql = `insert into exercise_category(category, category_url,description) values($1, $2,$3) returning *`;
   const handleValueFromUser = [userInput.category, userInput.category_url, userInput.description];
+  client.query(sql, handleValueFromUser).then(data => {
+    res.status(201).json(data.rows)
+  }).catch(err => errorHandler(err, req, res))
+}
+async function handleAddSchedule(req, res) {
+  const userInput = req.body;
+  const sql = `insert into  user_schedule(bodypart, equipment, gifUrl, exercise_name, exercise_target, week_day) values($1, $2, $3, $4, $5, $6) returning *`;
+  const handleValueFromUser = [userInput.bodypart, userInput.equipment, userInput.gifUrl, userInput.exercise_name, userInput.exercise_target, userInput.week_day];
   client.query(sql, handleValueFromUser).then(data => {
     res.status(201).json(data.rows)
   }).catch(err => errorHandler(err, req, res))
@@ -170,6 +203,16 @@ function handleGetDbCategory(req, res) {
 function handleDeleteCategory(req, res) {
   const id = req.params.id;
   const sql = `delete from exercise_category where id = ${id}`;
+  client.query(sql).then(() => {
+    return res.status(204).json({
+      code: 204,
+      message: `Row deleted successfuly with id: ${id}`
+    })
+  }).catch(err => errorHandler(err, req, res))
+}
+function handleDeleteSchedule(req, res) {
+  const id = req.params.id;
+  const sql = `delete from user_schedule where id = ${id}`;
   client.query(sql).then(() => {
     return res.status(204).json({
       code: 204,
