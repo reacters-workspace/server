@@ -224,7 +224,7 @@ function handleDeleteSchedule(req, res) {
 
 
 
-function errorHandler(error, req, res) {
+function errorHandler(error, req, res, next) {
   res.status(500).json({ code: 500, message: error.message || error })
 }
 
